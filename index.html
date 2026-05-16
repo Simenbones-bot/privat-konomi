@@ -233,6 +233,24 @@ tbody td:first-child{text-align:left;font-weight:700;color:var(--txt);}
 .sc-btn.active-real{background:rgba(99,102,241,.15);border-color:rgba(99,102,241,.3);color:#a5b4fc;}
 .sc-btn.active-opt{background:rgba(16,185,129,.15);border-color:rgba(16,185,129,.3);color:var(--green);}
 
+/* Family picker */
+.fam-picker{background:rgba(99,102,241,.06);border:1px solid rgba(99,102,241,.12);border-radius:10px;padding:12px 10px;margin-bottom:2px;}
+.fam-lbl{font-size:10px;text-transform:uppercase;letter-spacing:.7px;color:var(--txt3);font-weight:700;margin-bottom:6px;}
+.fam-btns{display:flex;gap:5px;}
+.fam-btn{flex:1;padding:7px 0;background:var(--surf);border:1px solid var(--border);border-radius:7px;color:var(--txt3);font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;transition:all .15s;}
+.fam-btn:hover{background:var(--surf2);color:var(--txt2);}
+.fam-btn.active{background:rgba(99,102,241,.22);border-color:rgba(99,102,241,.4);color:#a5b4fc;}
+
+/* Expense sub-headers */
+.sub-hdr{display:flex;justify-content:space-between;align-items:center;font-size:10px;text-transform:uppercase;letter-spacing:.7px;color:var(--txt3);font-weight:700;padding:8px 2px 4px;border-top:1px solid var(--border);margin-top:4px;}
+.sub-total{font-size:11px;color:var(--primary);font-weight:700;text-transform:none;letter-spacing:0;}
+
+/* Total expense display */
+.utg-total{display:flex;justify-content:space-between;align-items:center;background:rgba(245,158,11,.07);border:1px solid rgba(245,158,11,.15);border-radius:8px;padding:9px 12px;margin-top:6px;}
+.utg-total-lbl{font-size:11px;color:var(--txt3);font-weight:700;text-transform:uppercase;letter-spacing:.5px;}
+.utg-total-val{font-size:15px;font-weight:800;color:var(--amber);}
+.ssb-note{font-size:10px;color:var(--txt3);text-align:center;padding-top:6px;font-style:italic;}
+
 /* Scrollbar */
 ::-webkit-scrollbar{width:5px;height:5px;}
 ::-webkit-scrollbar-track{background:transparent;}
@@ -349,24 +367,131 @@ tbody td:first-child{text-align:left;font-weight:700;color:var(--txt);}
     </div>
   </div>
 
-  <!-- Inntekt -->
+  <!-- Inntekt & Forbruk -->
   <div style="margin-bottom:16px">
     <div class="acc-hdr open" onclick="toggle(this)">
       <span class="acc-icon">💵</span>
-      <span class="acc-label">Inntekt &amp; Utgifter</span>
+      <span class="acc-label">Inntekt &amp; Forbruk</span>
       <span class="acc-arrow">▼</span>
     </div>
     <div class="acc-body open">
+
+      <!-- Familie -->
+      <div class="fam-picker">
+        <div class="fam-lbl">Antall voksne</div>
+        <div class="fam-btns" id="fam-voksne">
+          <button class="fam-btn active" onclick="setFam('v',1)">1</button>
+          <button class="fam-btn" onclick="setFam('v',2)">2</button>
+          <button class="fam-btn" onclick="setFam('v',3)">3</button>
+          <button class="fam-btn" onclick="setFam('v',4)">4</button>
+        </div>
+        <div class="fam-lbl" style="margin-top:8px">Antall barn</div>
+        <div class="fam-btns" id="fam-barn">
+          <button class="fam-btn active" onclick="setFam('b',0)">0</button>
+          <button class="fam-btn" onclick="setFam('b',1)">1</button>
+          <button class="fam-btn" onclick="setFam('b',2)">2</button>
+          <button class="fam-btn" onclick="setFam('b',3)">3</button>
+          <button class="fam-btn" onclick="setFam('b',4)">4+</button>
+        </div>
+      </div>
+
+      <!-- Inntekt -->
+      <div class="sub-hdr" style="border-top:none;margin-top:2px">💳 Inntekt</div>
       <div class="ig"><label>Bruttolønn per måned (kr)</label>
-        <input type="number" id="bruttolon" placeholder="65 000" value="65000"></div>
+        <input type="number" id="bruttolon" value="65000"></div>
       <div class="ig"><label>Andre inntekter / måned (kr)</label>
-        <input type="number" id="annen-ink" placeholder="5 000" value="5000"></div>
-      <div class="ig"><label>Månedlige utgifter (kr)</label>
-        <input type="number" id="utgifter" placeholder="45 000" value="45000"></div>
-      <div class="ig"><label>Skattesats %</label>
-        <input type="number" id="skatt" step="0.5" value="35"></div>
-      <div class="ig"><label>Andel overskudd til fond % (av netto)</label>
-        <input type="number" id="fond-andel" step="1" value="40"></div>
+        <input type="number" id="annen-ink" value="5000"></div>
+      <div class="irow">
+        <div class="ig"><label>Skattesats %</label>
+          <input type="number" id="skatt" step="0.5" value="35"></div>
+        <div class="ig"><label>Til fond %</label>
+          <input type="number" id="fond-andel" step="1" value="40"></div>
+      </div>
+
+      <!-- Mat & Drikke -->
+      <div class="sub-hdr">🛒 Mat &amp; Drikke <span class="sub-total" id="st-mat">kr 4 800</span></div>
+      <div class="irow">
+        <div class="ig"><label>Dagligvarer</label>
+          <input type="number" id="exp-dagligvarer" value="3400"></div>
+        <div class="ig"><label>Kafé / restaurant</label>
+          <input type="number" id="exp-kafe" value="1000"></div>
+      </div>
+      <div class="ig"><label>Takeaway</label>
+        <input type="number" id="exp-takeaway" value="400"></div>
+
+      <!-- Bolig & Abonnement -->
+      <div class="sub-hdr">🏠 Bolig &amp; Abo. <span class="sub-total" id="st-bolig">kr 3 100</span></div>
+      <div class="irow">
+        <div class="ig"><label>Strøm &amp; oppvarming</label>
+          <input type="number" id="exp-strom" value="1200"></div>
+        <div class="ig"><label>Internett &amp; mobil</label>
+          <input type="number" id="exp-internett" value="700"></div>
+      </div>
+      <div class="irow">
+        <div class="ig"><label>Streaming / abo.</label>
+          <input type="number" id="exp-streaming" value="400"></div>
+        <div class="ig"><label>Kommunale avg.</label>
+          <input type="number" id="exp-kommunale" value="800"></div>
+      </div>
+
+      <!-- Transport -->
+      <div class="sub-hdr">🚗 Transport <span class="sub-total" id="st-transport">kr 3 100</span></div>
+      <div class="irow">
+        <div class="ig"><label>Drivstoff / lading</label>
+          <input type="number" id="exp-drivstoff" value="1200"></div>
+        <div class="ig"><label>Bilforsikring</label>
+          <input type="number" id="exp-bilforsikring" value="700"></div>
+      </div>
+      <div class="irow">
+        <div class="ig"><label>Service &amp; parkering</label>
+          <input type="number" id="exp-bilservice" value="400"></div>
+        <div class="ig"><label>Bompenger</label>
+          <input type="number" id="exp-bompenger" value="300"></div>
+      </div>
+      <div class="ig"><label>Kollektivtransport</label>
+        <input type="number" id="exp-kollektiv" value="500"></div>
+
+      <!-- Fritid, helse & annet -->
+      <div class="sub-hdr">🎉 Fritid &amp; helse <span class="sub-total" id="st-fritid">kr 5 000</span></div>
+      <div class="irow">
+        <div class="ig"><label>Klær og sko</label>
+          <input type="number" id="exp-klar" value="700"></div>
+        <div class="ig"><label>Helse &amp; medisin</label>
+          <input type="number" id="exp-helse" value="500"></div>
+      </div>
+      <div class="irow">
+        <div class="ig"><label>Personlig pleie</label>
+          <input type="number" id="exp-pleie" value="400"></div>
+        <div class="ig"><label>Fritid &amp; hobby</label>
+          <input type="number" id="exp-fritid" value="1200"></div>
+      </div>
+      <div class="irow">
+        <div class="ig"><label>Ferie (månedsnitt)</label>
+          <input type="number" id="exp-ferie" value="1500"></div>
+        <div class="ig"><label>Andre utgifter</label>
+          <input type="number" id="exp-andre" value="700"></div>
+      </div>
+
+      <!-- Barn (hidden if 0 barn) -->
+      <div id="barn-section" style="display:none">
+        <div class="sub-hdr">👶 Barn <span class="sub-total" id="st-barn">kr 0</span></div>
+        <div class="irow">
+          <div class="ig"><label>Barnehage / SFO</label>
+            <input type="number" id="exp-barnehage" value="0"></div>
+          <div class="ig"><label>Aktiviteter</label>
+            <input type="number" id="exp-barnaktiv" value="0"></div>
+        </div>
+        <div class="ig"><label>Klær &amp; utstyr</label>
+          <input type="number" id="exp-barnklar" value="0"></div>
+      </div>
+
+      <!-- Total -->
+      <div class="utg-total">
+        <span class="utg-total-lbl">Totalt forbruk / mnd</span>
+        <span class="utg-total-val" id="utg-total-val">kr 16 000</span>
+      </div>
+      <div class="ssb-note">Standardverdier fra SSB Forbruksundersøkelsen 2022</div>
+
     </div>
   </div>
 
@@ -520,10 +645,19 @@ tbody td:first-child{text-align:left;font-weight:700;color:var(--txt);}
       </div>
     </div>
     <div class="ccard">
-      <div class="ccard-title">Månedlig budsjett</div>
-      <div class="ccard-sub">Inntekt og utgiftsflyt</div>
-      <div id="bud-wrap" style="padding-top:8px"></div>
+      <div class="ccard-title">Forbruksfordeling</div>
+      <div class="ccard-sub">Hva pengene går til per måned</div>
+      <div class="chart-wrap h200">
+        <canvas id="chart-exp"></canvas>
+      </div>
     </div>
+  </div>
+
+  <!-- Budget detail card -->
+  <div class="ccard" style="margin-bottom:22px">
+    <div class="ccard-title">Månedlig budsjett</div>
+    <div class="ccard-sub">Inntekt, skatt og forbruk per kategori</div>
+    <div id="bud-wrap"></div>
   </div>
 
   <!-- FIRE card -->
@@ -692,9 +826,71 @@ function destroyChart(key) {
 }
 
 /* ═══════════════════════════════════════
+   FAMILY & SSB DEFAULTS
+═══════════════════════════════════════ */
+let famVoksne = 1;
+let famBarn   = 0;
+
+const SSB_PER_ENHET = {
+  'exp-dagligvarer': 3400, 'exp-kafe': 1000, 'exp-takeaway': 400,
+  'exp-kollektiv': 500, 'exp-klar': 700, 'exp-helse': 500,
+  'exp-pleie': 400, 'exp-fritid': 1200, 'exp-ferie': 1500, 'exp-andre': 700,
+};
+const SSB_FLAT = {
+  'exp-strom': 1200, 'exp-internett': 700, 'exp-streaming': 400, 'exp-kommunale': 800,
+  'exp-drivstoff': 1200, 'exp-bilforsikring': 700, 'exp-bilservice': 400, 'exp-bompenger': 300,
+};
+const SSB_PER_BARN = {
+  'exp-barnehage': 3300, 'exp-barnaktiv': 800, 'exp-barnklar': 600,
+};
+const EXP_GROUPS = {
+  'st-mat':       ['exp-dagligvarer','exp-kafe','exp-takeaway'],
+  'st-bolig':     ['exp-strom','exp-internett','exp-streaming','exp-kommunale'],
+  'st-transport': ['exp-drivstoff','exp-bilforsikring','exp-bilservice','exp-bompenger','exp-kollektiv'],
+  'st-fritid':    ['exp-klar','exp-helse','exp-pleie','exp-fritid','exp-ferie','exp-andre'],
+  'st-barn':      ['exp-barnehage','exp-barnaktiv','exp-barnklar'],
+};
+
+function setFam(type, num) {
+  if (type === 'v') famVoksne = num; else famBarn = num;
+  updateSSBDefaults();
+}
+
+function updateSSBDefaults() {
+  document.querySelectorAll('#fam-voksne .fam-btn').forEach((b, i) => b.classList.toggle('active', (i + 1) === famVoksne));
+  document.querySelectorAll('#fam-barn .fam-btn').forEach((b, i) => b.classList.toggle('active', i === famBarn));
+
+  const enheter = 1.0 + (famVoksne - 1) * 0.5 + famBarn * 0.3;
+  for (const [id, base] of Object.entries(SSB_PER_ENHET)) {
+    const el = document.getElementById(id); if (el) el.value = Math.round(base * enheter);
+  }
+  for (const [id, base] of Object.entries(SSB_PER_BARN)) {
+    const el = document.getElementById(id); if (el) el.value = Math.round(base * famBarn);
+  }
+  const barnSec = document.getElementById('barn-section');
+  if (barnSec) barnSec.style.display = famBarn > 0 ? '' : 'none';
+  run();
+}
+
+function sumAllExpenseInputs() {
+  return Object.values(EXP_GROUPS).flat().reduce((s, id) => s + v(id), 0);
+}
+
+function updateSubTotals() {
+  for (const [stId, ids] of Object.entries(EXP_GROUPS)) {
+    const el = document.getElementById(stId);
+    if (el) el.textContent = kr(ids.reduce((s, id) => s + v(id), 0));
+  }
+  const el = document.getElementById('utg-total-val');
+  if (el) el.textContent = kr(sumAllExpenseInputs());
+}
+
+/* ═══════════════════════════════════════
    MAIN CALCULATION
 ═══════════════════════════════════════ */
 function run() {
+  updateSubTotals();
+
   /* ── Raw inputs ── */
   const bolig0    = v('bolig');
   const bil0      = v('bil');
@@ -717,7 +913,7 @@ function run() {
 
   const bruttolon   = v('bruttolon', 65000);
   const annenInk    = v('annen-ink', 0);
-  const utgifter    = v('utgifter', 45000);
+  const utgifter    = sumAllExpenseInputs() || 16000;
   const skattesats  = v('skatt', 35) / 100;
   const fondAndel   = v('fond-andel', 40) / 100;
 
@@ -862,6 +1058,7 @@ function run() {
 
   /* Charts */
   renderCharts(lastData, fondvekst, pensjonvekst, boligvekst);
+  renderExpenseChart();
 
   /* Table */
   renderTable(lastData);
@@ -875,28 +1072,78 @@ function nettoAt(bruttolon, skatt, annen) {
    BUDGET BARS
 ═══════════════════════════════════════ */
 function renderBudget(brutto, netto, utgifter, skatt, annen) {
-  const skatteKr = brutto * skatt;
+  const skatteKr  = brutto * skatt;
   const overskudd = netto - utgifter;
-  const wrap = document.getElementById('bud-wrap');
+  const wrap      = document.getElementById('bud-wrap');
+
+  const mat      = EXP_GROUPS['st-mat'].reduce((s, id) => s + v(id), 0);
+  const boligUtg = EXP_GROUPS['st-bolig'].reduce((s, id) => s + v(id), 0);
+  const transport= EXP_GROUPS['st-transport'].reduce((s, id) => s + v(id), 0);
+  const fritidUtg= EXP_GROUPS['st-fritid'].reduce((s, id) => s + v(id), 0);
+  const barnUtg  = EXP_GROUPS['st-barn'].reduce((s, id) => s + v(id), 0);
 
   const items = [
-    { name: 'Bruttolønn', amt: brutto, color: '#6366f1', pct: 100 },
-    { name: `Skatt (${Math.round(skatt*100)}%)`, amt: -skatteKr, color: '#ef4444', pct: skatt * 100 },
-    { name: 'Utgifter', amt: -utgifter, color: '#f59e0b', pct: utgifter / brutto * 100 },
-    { name: 'Overskudd', amt: overskudd, color: overskudd >= 0 ? '#10b981' : '#ef4444', pct: Math.abs(overskudd) / brutto * 100 },
+    { name: 'Bruttolønn',              amt: brutto,           color: '#6366f1', pct: 100,                         deduct: false },
+    { name: `Skatt (${Math.round(skatt*100)}%)`, amt: skatteKr, color: '#ef4444', pct: skatt*100,                 deduct: true  },
+    { name: '🛒 Mat & Drikke',         amt: mat,              color: '#10b981', pct: mat/brutto*100,              deduct: true  },
+    { name: '🏠 Bolig & Abo.',         amt: boligUtg,         color: '#6366f1', pct: boligUtg/brutto*100,         deduct: true  },
+    { name: '🚗 Transport',            amt: transport,        color: '#f59e0b', pct: transport/brutto*100,        deduct: true  },
+    { name: '🎉 Fritid & helse',       amt: fritidUtg,        color: '#8b5cf6', pct: fritidUtg/brutto*100,        deduct: true  },
+    ...(barnUtg > 0 ? [{ name: '👶 Barn', amt: barnUtg,      color: '#06b6d4', pct: barnUtg/brutto*100,          deduct: true  }] : []),
+    { name: 'Overskudd',               amt: Math.abs(overskudd), color: overskudd >= 0 ? '#10b981' : '#ef4444',
+      pct: Math.abs(overskudd)/brutto*100, deduct: overskudd < 0 },
   ];
 
-  wrap.innerHTML = items.map(it => `
-    <div class="bud-item">
-      <div class="bud-row">
-        <span class="bud-name">${it.name}</span>
-        <span class="bud-amt" style="color:${it.color}">${it.amt >= 0 ? '' : '- '}${kr(Math.abs(it.amt))}</span>
-      </div>
-      <div class="prog">
-        <div class="prog-fill" style="width:${Math.min(100, Math.max(0, it.pct))}%;background:${it.color}"></div>
-      </div>
-    </div>
-  `).join('');
+  wrap.innerHTML = `<div style="display:grid;grid-template-columns:1fr 1fr;gap:4px 20px">` +
+    items.map(it => `
+      <div class="bud-item">
+        <div class="bud-row">
+          <span class="bud-name">${it.name}</span>
+          <span class="bud-amt" style="color:${it.color}">${it.deduct ? '− ' : ''}${kr(it.amt)}</span>
+        </div>
+        <div class="prog">
+          <div class="prog-fill" style="width:${Math.min(100, Math.max(0, it.pct))}%;background:${it.color}"></div>
+        </div>
+      </div>`).join('') + '</div>';
+}
+
+/* ═══════════════════════════════════════
+   EXPENSE DONUT CHART
+═══════════════════════════════════════ */
+function renderExpenseChart() {
+  destroyChart('exp');
+  const canvas = document.getElementById('chart-exp');
+  if (!canvas) return;
+
+  const groups = [
+    { name: '🛒 Mat & Drikke',   ids: EXP_GROUPS['st-mat'],       color: '#10b981' },
+    { name: '🏠 Bolig & Abo.',   ids: EXP_GROUPS['st-bolig'],     color: '#6366f1' },
+    { name: '🚗 Transport',      ids: EXP_GROUPS['st-transport'], color: '#f59e0b' },
+    { name: '🎉 Fritid & helse', ids: EXP_GROUPS['st-fritid'],    color: '#8b5cf6' },
+    { name: '👶 Barn',           ids: EXP_GROUPS['st-barn'],      color: '#06b6d4' },
+  ];
+  const data   = groups.map(g => Math.max(0, g.ids.reduce((s, id) => s + v(id), 0)));
+  const total  = data.reduce((a, b) => a + b, 0);
+
+  charts.exp = new Chart(canvas.getContext('2d'), {
+    type: 'doughnut',
+    data: {
+      labels: groups.map(g => g.name),
+      datasets: [{ data, backgroundColor: groups.map(g => g.color), borderWidth: 0, hoverOffset: 10 }]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false, cutout: '60%',
+      plugins: {
+        legend: { position: 'bottom', labels: { boxWidth: 10, color: '#94a3b8', padding: 8, font: { size: 10 } } },
+        tooltip: {
+          ...TT_BASE,
+          callbacks: {
+            label: c => ` ${c.label}: ${kr(c.raw)} (${total > 0 ? (c.raw/total*100).toFixed(1) : 0}%)`
+          }
+        },
+      }
+    }
+  });
 }
 
 /* ═══════════════════════════════════════
@@ -1148,6 +1395,12 @@ document.addEventListener('DOMContentLoaded', () => {
       clearTimeout(timer);
       timer = setTimeout(run, 500);
     });
+  });
+
+  /* Also re-attach listener for any dynamically shown barn-section inputs */
+  document.getElementById('barn-section').addEventListener('input', () => {
+    clearTimeout(timer);
+    timer = setTimeout(run, 500);
   });
 });
 </script>
