@@ -1,0 +1,1155 @@
+<!DOCTYPE html>
+<html lang="no">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Privat Økonomi — Nettoverdi Dashboard</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg:        #05051a;
+  --bg2:       #0b0b28;
+  --surf:      rgba(255,255,255,0.035);
+  --surf2:     rgba(255,255,255,0.065);
+  --border:    rgba(255,255,255,0.07);
+  --border2:   rgba(255,255,255,0.12);
+  --primary:   #6366f1;
+  --primary-d: #4f46e5;
+  --pglow:     rgba(99,102,241,0.25);
+  --violet:    #8b5cf6;
+  --cyan:      #06b6d4;
+  --green:     #10b981;
+  --red:       #ef4444;
+  --amber:     #f59e0b;
+  --orange:    #f97316;
+  --txt:       #f1f5f9;
+  --txt2:      #94a3b8;
+  --txt3:      #475569;
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+html{scroll-behavior:smooth;}
+body{
+  font-family:'Inter',-apple-system,sans-serif;
+  background:var(--bg);
+  color:var(--txt);
+  min-height:100vh;
+  overflow-x:hidden;
+}
+
+/* ── Floating glow orbs ── */
+.orb{position:fixed;pointer-events:none;border-radius:50%;filter:blur(80px);z-index:0;}
+.orb1{width:700px;height:700px;top:-200px;left:-150px;background:radial-gradient(circle,rgba(99,102,241,.12) 0%,transparent 70%);}
+.orb2{width:500px;height:500px;bottom:-150px;right:-100px;background:radial-gradient(circle,rgba(139,92,246,.10) 0%,transparent 70%);}
+.orb3{width:400px;height:400px;top:40%;left:50%;transform:translateX(-50%);background:radial-gradient(circle,rgba(6,182,212,.06) 0%,transparent 70%);}
+
+/* ── Layout ── */
+.layout{display:flex;min-height:100vh;position:relative;z-index:1;}
+
+/* ── SIDEBAR ── */
+.sidebar{
+  width:360px;min-width:360px;
+  background:rgba(8,8,30,.97);
+  border-right:1px solid var(--border);
+  padding:24px 20px;
+  overflow-y:auto;
+  position:sticky;top:0;height:100vh;
+}
+.sidebar::-webkit-scrollbar{width:4px;}
+.sidebar::-webkit-scrollbar-track{background:transparent;}
+.sidebar::-webkit-scrollbar-thumb{background:rgba(255,255,255,.08);border-radius:2px;}
+
+.logo{display:flex;align-items:center;gap:12px;margin-bottom:28px;padding-bottom:20px;border-bottom:1px solid var(--border);}
+.logo-icon{
+  width:44px;height:44px;border-radius:13px;
+  background:linear-gradient(135deg,var(--primary),var(--violet));
+  display:flex;align-items:center;justify-content:center;font-size:22px;
+  box-shadow:0 0 20px var(--pglow);
+}
+.logo-text h1{font-size:15px;font-weight:800;letter-spacing:-.3px;}
+.logo-text p{font-size:11px;color:var(--txt3);margin-top:1px;}
+
+/* section accordion */
+.acc-hdr{
+  display:flex;align-items:center;gap:8px;
+  padding:9px 11px;margin-bottom:10px;
+  background:var(--surf);border:1px solid var(--border);border-radius:10px;
+  cursor:pointer;user-select:none;transition:background .15s,border-color .15s;
+}
+.acc-hdr:hover{background:var(--surf2);border-color:var(--border2);}
+.acc-icon{font-size:15px;line-height:1;}
+.acc-label{flex:1;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:var(--txt2);}
+.acc-arrow{font-size:10px;color:var(--txt3);transition:transform .2s;}
+.acc-hdr.open .acc-arrow{transform:rotate(180deg);}
+.acc-body{display:none;flex-direction:column;gap:9px;padding:0 2px 4px;}
+.acc-body.open{display:flex;}
+
+/* inputs */
+.ig{display:flex;flex-direction:column;gap:4px;}
+.ig label{font-size:11px;color:var(--txt3);font-weight:600;}
+.ig input{
+  background:var(--surf);border:1px solid var(--border);border-radius:8px;
+  padding:9px 11px;color:var(--txt);font-size:13px;font-family:inherit;
+  width:100%;transition:border-color .15s,box-shadow .15s,background .15s;
+}
+.ig input:focus{
+  outline:none;border-color:var(--primary);
+  background:rgba(99,102,241,.07);
+  box-shadow:0 0 0 3px var(--pglow);
+}
+.ig input::placeholder{color:var(--txt3);}
+.irow{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
+.sep{border:none;border-top:1px solid var(--border);margin:4px 0;}
+
+.btn-calc{
+  width:100%;padding:13px;margin-top:20px;
+  background:linear-gradient(135deg,var(--primary),var(--violet));
+  border:none;border-radius:12px;
+  color:#fff;font-size:14px;font-weight:700;letter-spacing:.3px;
+  cursor:pointer;font-family:inherit;
+  transition:transform .15s,box-shadow .15s;
+  box-shadow:0 4px 20px var(--pglow);
+}
+.btn-calc:hover{transform:translateY(-1px);box-shadow:0 8px 28px var(--pglow);}
+.btn-calc:active{transform:translateY(0);}
+
+/* ── MAIN ── */
+.main{flex:1;padding:28px 32px;overflow-y:auto;min-width:0;}
+
+/* header banner */
+.banner{
+  background:linear-gradient(135deg,rgba(99,102,241,.12),rgba(139,92,246,.10));
+  border:1px solid rgba(99,102,241,.2);
+  border-radius:20px;padding:30px 36px;margin-bottom:24px;
+  position:relative;overflow:hidden;
+}
+.banner::after{
+  content:'';position:absolute;top:-60px;right:-60px;width:280px;height:280px;
+  background:radial-gradient(circle,rgba(99,102,241,.18) 0%,transparent 65%);
+  pointer-events:none;
+}
+.banner-lbl{font-size:11px;text-transform:uppercase;letter-spacing:1.2px;color:var(--txt3);font-weight:700;margin-bottom:6px;}
+.nw-val{
+  font-size:56px;font-weight:900;letter-spacing:-2px;line-height:1;
+  background:linear-gradient(135deg,#fff 30%,var(--cyan));
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
+  margin-bottom:10px;
+}
+.nw-val.neg{background:linear-gradient(135deg,#fff 30%,var(--red));-webkit-background-clip:text;background-clip:text;}
+.banner-sub{font-size:13px;color:var(--txt2);}
+.banner-badge{
+  display:inline-flex;align-items:center;gap:5px;
+  padding:4px 14px;border-radius:20px;font-size:12px;font-weight:700;margin-top:10px;
+}
+.badge-pos{background:rgba(16,185,129,.15);color:var(--green);}
+.badge-neg{background:rgba(239,68,68,.15);color:var(--red);}
+
+/* KPI grid */
+.kpi-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:22px;}
+.kpi{
+  background:var(--surf);border:1px solid var(--border);border-radius:16px;
+  padding:18px 20px;transition:transform .15s,border-color .15s,background .15s;
+}
+.kpi:hover{transform:translateY(-2px);background:var(--surf2);border-color:var(--border2);}
+.kpi-ico{font-size:22px;margin-bottom:10px;}
+.kpi-lbl{font-size:10px;text-transform:uppercase;letter-spacing:.7px;color:var(--txt3);font-weight:700;margin-bottom:6px;}
+.kpi-val{font-size:20px;font-weight:800;margin-bottom:2px;}
+.kpi-hint{font-size:11px;color:var(--txt3);}
+.kpi.c-green .kpi-val{color:var(--green);}
+.kpi.c-red .kpi-val{color:var(--red);}
+.kpi.c-cyan .kpi-val{color:var(--cyan);}
+.kpi.c-violet .kpi-val{color:var(--violet);}
+.kpi.c-amber .kpi-val{color:var(--amber);}
+.kpi.c-primary .kpi-val{color:var(--primary);}
+
+/* Charts */
+.chart-grid{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-bottom:22px;}
+.chart-grid-3{display:grid;grid-template-columns:2fr 1fr 1fr;gap:18px;margin-bottom:22px;}
+.ccard{background:var(--surf);border:1px solid var(--border);border-radius:16px;padding:22px 24px;}
+.ccard.wide{grid-column:1/-1;}
+.ccard-title{font-size:14px;font-weight:700;margin-bottom:2px;}
+.ccard-sub{font-size:11px;color:var(--txt3);margin-bottom:18px;}
+.chart-wrap{position:relative;}
+.chart-wrap.h260{height:260px;}
+.chart-wrap.h220{height:220px;}
+.chart-wrap.h200{height:200px;}
+
+/* Budget bars */
+.bud-item{margin-bottom:13px;}
+.bud-row{display:flex;justify-content:space-between;font-size:12px;margin-bottom:5px;}
+.bud-row .bud-name{color:var(--txt2);}
+.bud-row .bud-amt{font-weight:700;color:var(--txt);}
+.prog{height:5px;background:rgba(255,255,255,.05);border-radius:3px;overflow:hidden;}
+.prog-fill{height:100%;border-radius:3px;transition:width .7s cubic-bezier(.4,0,.2,1);}
+
+/* FIRE card */
+.fire-card{
+  background:linear-gradient(135deg,rgba(245,158,11,.1),rgba(249,115,22,.08));
+  border:1px solid rgba(245,158,11,.2);border-radius:16px;padding:22px 24px;margin-bottom:22px;
+}
+.fire-row{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-top:16px;}
+.fire-item label{font-size:10px;text-transform:uppercase;letter-spacing:.7px;color:var(--txt3);font-weight:700;}
+.fire-item .fire-val{font-size:20px;font-weight:800;color:var(--amber);margin-top:4px;}
+.fire-item .fire-sub{font-size:11px;color:var(--txt3);margin-top:2px;}
+.fire-progress-wrap{margin-top:18px;}
+.fire-pct{font-size:13px;color:var(--txt2);margin-bottom:6px;}
+.fire-prog{height:8px;background:rgba(255,255,255,.05);border-radius:4px;overflow:hidden;}
+.fire-prog-fill{
+  height:100%;border-radius:4px;
+  background:linear-gradient(90deg,var(--amber),var(--orange));
+  transition:width .9s cubic-bezier(.4,0,.2,1);
+}
+
+/* Table */
+.tcard{background:var(--surf);border:1px solid var(--border);border-radius:16px;padding:22px 24px;overflow-x:auto;}
+.tcard-title{font-size:14px;font-weight:700;margin-bottom:2px;}
+.tcard-sub{font-size:11px;color:var(--txt3);margin-bottom:18px;}
+table{width:100%;border-collapse:collapse;font-size:12px;min-width:640px;}
+thead th{
+  padding:8px 12px;text-align:right;
+  font-size:10px;text-transform:uppercase;letter-spacing:.6px;
+  color:var(--txt3);font-weight:700;border-bottom:1px solid var(--border);
+}
+thead th:first-child{text-align:left;}
+tbody tr{border-bottom:1px solid rgba(255,255,255,.025);transition:background .1s;}
+tbody tr:hover{background:rgba(255,255,255,.03);}
+tbody tr.yr-now{background:rgba(99,102,241,.07);}
+tbody td{padding:10px 12px;color:var(--txt2);text-align:right;}
+tbody td:first-child{text-align:left;font-weight:700;color:var(--txt);}
+.td-pos{color:var(--green)!important;font-weight:600;}
+.td-neg{color:var(--red)!important;font-weight:600;}
+.yr-badge{font-size:9px;background:rgba(99,102,241,.3);color:#a5b4fc;padding:1px 6px;border-radius:4px;margin-left:6px;font-weight:700;}
+
+/* Scenario toggle */
+.scenario-bar{display:flex;gap:8px;margin-bottom:14px;}
+.sc-btn{
+  flex:1;padding:7px 0;border-radius:8px;border:1px solid var(--border);
+  background:var(--surf);color:var(--txt2);font-size:11px;font-weight:700;
+  cursor:pointer;font-family:inherit;letter-spacing:.4px;transition:all .15s;
+}
+.sc-btn:hover{border-color:var(--border2);background:var(--surf2);}
+.sc-btn.active-pess{background:rgba(239,68,68,.15);border-color:rgba(239,68,68,.3);color:var(--red);}
+.sc-btn.active-real{background:rgba(99,102,241,.15);border-color:rgba(99,102,241,.3);color:#a5b4fc;}
+.sc-btn.active-opt{background:rgba(16,185,129,.15);border-color:rgba(16,185,129,.3);color:var(--green);}
+
+/* Scrollbar */
+::-webkit-scrollbar{width:5px;height:5px;}
+::-webkit-scrollbar-track{background:transparent;}
+::-webkit-scrollbar-thumb{background:rgba(255,255,255,.08);border-radius:3px;}
+::-webkit-scrollbar-thumb:hover{background:rgba(255,255,255,.15);}
+
+/* Animations */
+@keyframes fadein{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
+.banner,.kpi,.ccard,.fire-card,.tcard{animation:fadein .4s ease both;}
+.kpi:nth-child(1){animation-delay:.05s}
+.kpi:nth-child(2){animation-delay:.1s}
+.kpi:nth-child(3){animation-delay:.15s}
+.kpi:nth-child(4){animation-delay:.2s}
+
+/* Responsive */
+@media(max-width:1300px){.kpi-grid{grid-template-columns:repeat(2,1fr);}
+  .chart-grid-3{grid-template-columns:1fr 1fr;}}
+@media(max-width:960px){
+  .layout{flex-direction:column;}
+  .sidebar{width:100%;min-width:unset;height:auto;position:static;}
+  .chart-grid,.chart-grid-3{grid-template-columns:1fr;}
+  .ccard.wide{grid-column:1;}
+  .fire-row{grid-template-columns:1fr 1fr;}
+}
+@media(max-width:600px){
+  .main{padding:16px;}
+  .nw-val{font-size:38px;}
+  .kpi-grid{grid-template-columns:1fr 1fr;}
+  .fire-row{grid-template-columns:1fr;}
+}
+</style>
+</head>
+<body>
+
+<!-- Background orbs -->
+<div class="orb orb1"></div>
+<div class="orb orb2"></div>
+<div class="orb orb3"></div>
+
+<div class="layout">
+
+<!-- ═══════════════ SIDEBAR ═══════════════ -->
+<aside class="sidebar">
+  <div class="logo">
+    <div class="logo-icon">💎</div>
+    <div class="logo-text">
+      <h1>Nettoverdi</h1>
+      <p>Privat økonomi — 2026–2035</p>
+    </div>
+  </div>
+
+  <!-- Eiendeler -->
+  <div style="margin-bottom:16px">
+    <div class="acc-hdr open" onclick="toggle(this)">
+      <span class="acc-icon">🏠</span>
+      <span class="acc-label">Eiendeler</span>
+      <span class="acc-arrow">▼</span>
+    </div>
+    <div class="acc-body open">
+      <div class="ig"><label>Bolig / Eiendom (kr)</label>
+        <input type="number" id="bolig" placeholder="3 500 000" value="3500000"></div>
+      <div class="ig"><label>Bil — markedsverdi (kr)</label>
+        <input type="number" id="bil" placeholder="400 000" value="400000"></div>
+      <div class="ig"><label>Bankinnskudd / Bufferkonto (kr)</label>
+        <input type="number" id="bank" placeholder="200 000" value="200000"></div>
+      <div class="ig"><label>Aksjer og fond (kr)</label>
+        <input type="number" id="fond" placeholder="150 000" value="150000"></div>
+      <div class="ig"><label>Pensjonssparing (OTP/IPS) (kr)</label>
+        <input type="number" id="pensjon" placeholder="300 000" value="300000"></div>
+      <div class="ig"><label>Andre eiendeler (kr)</label>
+        <input type="number" id="andre-eid" placeholder="50 000" value="50000"></div>
+    </div>
+  </div>
+
+  <!-- Gjeld -->
+  <div style="margin-bottom:16px">
+    <div class="acc-hdr open" onclick="toggle(this)">
+      <span class="acc-icon">🏦</span>
+      <span class="acc-label">Gjeld</span>
+      <span class="acc-arrow">▼</span>
+    </div>
+    <div class="acc-body open">
+      <div class="ig"><label>Boliglån — saldo (kr)</label>
+        <input type="number" id="bolig-lan" placeholder="2 800 000" value="2800000"></div>
+      <div class="irow">
+        <div class="ig"><label>Rente %</label>
+          <input type="number" id="bolig-rente" step="0.1" value="5.5"></div>
+        <div class="ig"><label>År igjen</label>
+          <input type="number" id="bolig-ar" value="25"></div>
+      </div>
+      <hr class="sep">
+      <div class="ig"><label>Billån — saldo (kr)</label>
+        <input type="number" id="bil-lan" placeholder="200 000" value="200000"></div>
+      <div class="irow">
+        <div class="ig"><label>Rente %</label>
+          <input type="number" id="bil-rente" step="0.1" value="7.0"></div>
+        <div class="ig"><label>År igjen</label>
+          <input type="number" id="bil-ar" value="4"></div>
+      </div>
+      <hr class="sep">
+      <div class="ig"><label>Studielån — saldo (kr)</label>
+        <input type="number" id="studie-lan" placeholder="200 000" value="200000"></div>
+      <div class="irow">
+        <div class="ig"><label>Rente %</label>
+          <input type="number" id="studie-rente" step="0.1" value="3.8"></div>
+        <div class="ig"><label>År igjen</label>
+          <input type="number" id="studie-ar" value="15"></div>
+      </div>
+      <hr class="sep">
+      <div class="ig"><label>Forbrukslån / Kredittkort (kr)</label>
+        <input type="number" id="forbruk-lan" placeholder="30 000" value="30000"></div>
+      <div class="ig"><label>Forbrukslån rente %</label>
+        <input type="number" id="forbruk-rente" step="0.1" value="18.0"></div>
+    </div>
+  </div>
+
+  <!-- Inntekt -->
+  <div style="margin-bottom:16px">
+    <div class="acc-hdr open" onclick="toggle(this)">
+      <span class="acc-icon">💵</span>
+      <span class="acc-label">Inntekt &amp; Utgifter</span>
+      <span class="acc-arrow">▼</span>
+    </div>
+    <div class="acc-body open">
+      <div class="ig"><label>Bruttolønn per måned (kr)</label>
+        <input type="number" id="bruttolon" placeholder="65 000" value="65000"></div>
+      <div class="ig"><label>Andre inntekter / måned (kr)</label>
+        <input type="number" id="annen-ink" placeholder="5 000" value="5000"></div>
+      <div class="ig"><label>Månedlige utgifter (kr)</label>
+        <input type="number" id="utgifter" placeholder="45 000" value="45000"></div>
+      <div class="ig"><label>Skattesats %</label>
+        <input type="number" id="skatt" step="0.5" value="35"></div>
+      <div class="ig"><label>Andel overskudd til fond % (av netto)</label>
+        <input type="number" id="fond-andel" step="1" value="40"></div>
+    </div>
+  </div>
+
+  <!-- Parametere -->
+  <div style="margin-bottom:16px">
+    <div class="acc-hdr" onclick="toggle(this)">
+      <span class="acc-icon">⚙️</span>
+      <span class="acc-label">Parametere</span>
+      <span class="acc-arrow">▼</span>
+    </div>
+    <div class="acc-body">
+      <div class="irow">
+        <div class="ig"><label>Inflasjon %/år</label>
+          <input type="number" id="inflasjon" step="0.1" value="2.5"></div>
+        <div class="ig"><label>Lønnsvekst %/år</label>
+          <input type="number" id="lonnsvekst" step="0.1" value="3.0"></div>
+      </div>
+      <div class="irow">
+        <div class="ig"><label>Boligprisvekst %</label>
+          <input type="number" id="boligvekst" step="0.1" value="3.5"></div>
+        <div class="ig"><label>Fondavkastning %</label>
+          <input type="number" id="fondvekst" step="0.1" value="7.0"></div>
+      </div>
+      <div class="irow">
+        <div class="ig"><label>Pensjonavkastning %</label>
+          <input type="number" id="pensjonvekst" step="0.1" value="5.0"></div>
+        <div class="ig"><label>Bil avskriving %/år</label>
+          <input type="number" id="bilavskr" step="0.5" value="15"></div>
+      </div>
+      <div class="ig"><label>FIRE: ønsket månedlig forbruk (kr)</label>
+        <input type="number" id="fire-forbruk" placeholder="60 000" value="60000"></div>
+    </div>
+  </div>
+
+  <button class="btn-calc" onclick="run()">⚡&nbsp; Beregn &amp; oppdater alle grafer</button>
+</aside>
+
+<!-- ═══════════════ MAIN ═══════════════ -->
+<main class="main">
+
+  <!-- Banner -->
+  <div class="banner">
+    <div class="banner-lbl">Total nettoverdi — <span id="banner-year">2026</span></div>
+    <div class="nw-val" id="nw-val">kr 0</div>
+    <div class="banner-sub">Totale eiendeler minus all gjeld</div>
+    <div class="banner-badge badge-pos" id="banner-badge">
+      <span id="badge-arrow">↑</span>&nbsp;<span id="badge-txt">Laster...</span>
+    </div>
+  </div>
+
+  <!-- KPIs -->
+  <div class="kpi-grid">
+    <div class="kpi c-green">
+      <div class="kpi-ico">🏛️</div>
+      <div class="kpi-lbl">Totale eiendeler</div>
+      <div class="kpi-val" id="kpi-eid">kr 0</div>
+      <div class="kpi-hint">Bolig, bil, sparing, fond</div>
+    </div>
+    <div class="kpi c-red">
+      <div class="kpi-ico">📉</div>
+      <div class="kpi-lbl">Total gjeld</div>
+      <div class="kpi-val" id="kpi-gjeld">kr 0</div>
+      <div class="kpi-hint">Alle lån samlet</div>
+    </div>
+    <div class="kpi c-cyan">
+      <div class="kpi-ico">💰</div>
+      <div class="kpi-lbl">Månedlig overskudd</div>
+      <div class="kpi-val" id="kpi-overskudd">kr 0</div>
+      <div class="kpi-hint">Etter skatt og utgifter</div>
+    </div>
+    <div class="kpi c-violet">
+      <div class="kpi-ico">📈</div>
+      <div class="kpi-lbl">Nettoverdi 2035</div>
+      <div class="kpi-val" id="kpi-2035">kr 0</div>
+      <div class="kpi-hint">Estimert fremtidig verdi</div>
+    </div>
+    <div class="kpi c-primary">
+      <div class="kpi-ico">⚖️</div>
+      <div class="kpi-lbl">Gjeld / Eiendel-ratio</div>
+      <div class="kpi-val" id="kpi-ratio">0%</div>
+      <div class="kpi-hint">Under 80% er bra</div>
+    </div>
+    <div class="kpi c-amber">
+      <div class="kpi-ico">🔥</div>
+      <div class="kpi-lbl">FIRE-mål</div>
+      <div class="kpi-val" id="kpi-fire">kr 0</div>
+      <div class="kpi-hint">4% uttaksregel</div>
+    </div>
+    <div class="kpi c-green">
+      <div class="kpi-ico">🏠</div>
+      <div class="kpi-lbl">Boligverdi 2035</div>
+      <div class="kpi-val" id="kpi-bolig35">kr 0</div>
+      <div class="kpi-hint">Inkl. prisvekst</div>
+    </div>
+    <div class="kpi c-red">
+      <div class="kpi-ico">🚗</div>
+      <div class="kpi-lbl">Bilverdi nå</div>
+      <div class="kpi-val" id="kpi-bil">kr 0</div>
+      <div class="kpi-hint">Avskrevet markedsverdi</div>
+    </div>
+  </div>
+
+  <!-- Chart: Net worth wide -->
+  <div class="chart-grid" style="grid-template-columns:1fr">
+    <div class="ccard wide">
+      <div class="ccard-title">Nettoverdi over tid — 2026 til 2035</div>
+      <div class="ccard-sub">Projeksjon med inflasjon, lønnsvekst og investeringsavkastning</div>
+      <div class="scenario-bar">
+        <button class="sc-btn" id="sc-pess" onclick="setScenario('pess')">📉 Pessimistisk</button>
+        <button class="sc-btn active-real" id="sc-real" onclick="setScenario('real')">⚖️ Realistisk</button>
+        <button class="sc-btn" id="sc-opt" onclick="setScenario('opt')">📈 Optimistisk</button>
+      </div>
+      <div class="chart-wrap h260">
+        <canvas id="chart-nw"></canvas>
+      </div>
+    </div>
+  </div>
+
+  <!-- Charts row 2 -->
+  <div class="chart-grid">
+    <div class="ccard">
+      <div class="ccard-title">Eiendeler vs. Gjeld</div>
+      <div class="ccard-sub">Utvikling og krysningspunkt</div>
+      <div class="chart-wrap h220">
+        <canvas id="chart-eid-gjeld"></canvas>
+      </div>
+    </div>
+    <div class="ccard">
+      <div class="ccard-title">Gjeldsnedbetaling</div>
+      <div class="ccard-sub">Restgjeld per lånetype</div>
+      <div class="chart-wrap h220">
+        <canvas id="chart-gjeld-type"></canvas>
+      </div>
+    </div>
+  </div>
+
+  <!-- Charts row 3 -->
+  <div class="chart-grid-3">
+    <div class="ccard">
+      <div class="ccard-title">Vekst per aktiva</div>
+      <div class="ccard-sub">Fond, sparing og pensjon til 2035</div>
+      <div class="chart-wrap h200">
+        <canvas id="chart-aktiva"></canvas>
+      </div>
+    </div>
+    <div class="ccard">
+      <div class="ccard-title">Aktivafordeling</div>
+      <div class="ccard-sub">Nåværende sammensetning</div>
+      <div class="chart-wrap h200">
+        <canvas id="chart-donut"></canvas>
+      </div>
+    </div>
+    <div class="ccard">
+      <div class="ccard-title">Månedlig budsjett</div>
+      <div class="ccard-sub">Inntekt og utgiftsflyt</div>
+      <div id="bud-wrap" style="padding-top:8px"></div>
+    </div>
+  </div>
+
+  <!-- FIRE card -->
+  <div class="fire-card">
+    <div class="ccard-title">🔥 FIRE — Financial Independence</div>
+    <div class="ccard-sub" style="margin-bottom:0">Basert på 4%-regelen: du trenger 25× ditt årlige forbruk</div>
+    <div class="fire-row">
+      <div class="fire-item">
+        <label>FIRE-tall (25× forbruk)</label>
+        <div class="fire-val" id="fire-maal">kr 0</div>
+        <div class="fire-sub">Nødvendig portefølje</div>
+      </div>
+      <div class="fire-item">
+        <label>Investérbar nettoverdi nå</label>
+        <div class="fire-val" id="fire-naa">kr 0</div>
+        <div class="fire-sub">Fond + pensjon + sparing</div>
+      </div>
+      <div class="fire-item">
+        <label>Estimert FIRE-år</label>
+        <div class="fire-val" id="fire-ar">—</div>
+        <div class="fire-sub">Basert på nåværende bane</div>
+      </div>
+    </div>
+    <div class="fire-progress-wrap">
+      <div class="fire-pct" id="fire-pct-txt">0% av FIRE-målet nådd</div>
+      <div class="fire-prog"><div class="fire-prog-fill" id="fire-prog-fill" style="width:0%"></div></div>
+    </div>
+  </div>
+
+  <!-- Projection table -->
+  <div class="tcard">
+    <div class="tcard-title">Detaljert fremskrivingstabell</div>
+    <div class="tcard-sub">Alle tall i nominelle kroner · klikk på en rad for å se detaljer</div>
+    <table>
+      <thead>
+        <tr>
+          <th>År</th>
+          <th>Eiendeler</th>
+          <th>Gjeld</th>
+          <th>Nettoverdi</th>
+          <th>Årsendring</th>
+          <th>Total vekst</th>
+          <th>Fond + Sparing</th>
+          <th>Mnd. overskudd</th>
+        </tr>
+      </thead>
+      <tbody id="t-body"></tbody>
+    </table>
+  </div>
+
+</main>
+</div>
+
+<script>
+/* ═══════════════════════════════════════
+   STATE
+═══════════════════════════════════════ */
+let charts = {};
+let activeScenario = 'real';
+let lastData = null;
+
+const CURRENT_YEAR = 2026;
+const END_YEAR = 2035;
+
+/* ═══════════════════════════════════════
+   HELPERS
+═══════════════════════════════════════ */
+function v(id, def = 0) {
+  return parseFloat(document.getElementById(id).value) || def;
+}
+
+function kr(n, compact = false) {
+  if (compact) {
+    if (Math.abs(n) >= 1e6) return 'kr ' + (n / 1e6).toFixed(2).replace(/\.?0+$/, '') + ' M';
+    if (Math.abs(n) >= 1e3) return 'kr ' + (n / 1e3).toFixed(0) + ' k';
+  }
+  return 'kr ' + Math.round(n).toLocaleString('nb-NO');
+}
+
+function pct(n) { return n.toFixed(1) + '%'; }
+
+function animNum(el, end, dur = 900, isKr = true) {
+  const start = 0;
+  const t0 = performance.now();
+  function step(t) {
+    const p = Math.min((t - t0) / dur, 1);
+    const ease = 1 - Math.pow(1 - p, 3);
+    el.textContent = isKr ? kr(start + (end - start) * ease) : pct((start + (end - start) * ease));
+    if (p < 1) requestAnimationFrame(step);
+  }
+  requestAnimationFrame(step);
+}
+
+/* Loan remaining balance after t years */
+function loanBal(P, rAnn, nYears, tYears) {
+  if (P <= 0 || nYears <= 0) return 0;
+  const r = rAnn / 12;
+  const n = nYears * 12;
+  const k = Math.min(tYears * 12, n);
+  if (r === 0) return Math.max(0, P * (1 - k / n));
+  return Math.max(0, P * (Math.pow(1 + r, n) - Math.pow(1 + r, k)) / (Math.pow(1 + r, n) - 1));
+}
+
+function monthlyPmt(P, rAnn, nYears) {
+  if (P <= 0 || nYears <= 0) return 0;
+  const r = rAnn / 12;
+  const n = nYears * 12;
+  if (r === 0) return P / n;
+  return P * r * Math.pow(1 + r, n) / (Math.pow(1 + r, n) - 1);
+}
+
+/* ═══════════════════════════════════════
+   ACCORDION
+═══════════════════════════════════════ */
+function toggle(hdr) {
+  hdr.classList.toggle('open');
+  hdr.nextElementSibling.classList.toggle('open');
+}
+
+/* ═══════════════════════════════════════
+   SCENARIO
+═══════════════════════════════════════ */
+function setScenario(s) {
+  activeScenario = s;
+  ['pess','real','opt'].forEach(x => {
+    const b = document.getElementById('sc-' + x);
+    b.className = 'sc-btn';
+    if (x === s) b.classList.add('active-' + x);
+  });
+  run();
+}
+
+function scenarioMult(base, field) {
+  const m = activeScenario === 'pess' ? 0.6 : activeScenario === 'opt' ? 1.5 : 1.0;
+  const am = activeScenario === 'pess' ? 1.4 : activeScenario === 'opt' ? 0.7 : 1.0;
+  if (['fondvekst','pensjonvekst','boligvekst','lonnsvekst'].includes(field)) return base * m;
+  if (['inflasjon'].includes(field)) return base * am;
+  return base;
+}
+
+/* ═══════════════════════════════════════
+   CHART DEFAULTS
+═══════════════════════════════════════ */
+Chart.defaults.color = '#475569';
+Chart.defaults.borderColor = 'rgba(255,255,255,0.05)';
+Chart.defaults.font.family = "'Inter', sans-serif";
+Chart.defaults.font.size = 11;
+
+const TT_BASE = {
+  backgroundColor: 'rgba(10,10,35,0.97)',
+  borderColor: 'rgba(255,255,255,0.1)',
+  borderWidth: 1,
+  titleColor: '#f1f5f9',
+  bodyColor: '#94a3b8',
+  padding: 10,
+};
+
+function grad(ctx, c1, c2, h = 260) {
+  const g = ctx.createLinearGradient(0, 0, 0, h);
+  g.addColorStop(0, c1); g.addColorStop(1, c2);
+  return g;
+}
+
+function destroyChart(key) {
+  if (charts[key]) { charts[key].destroy(); charts[key] = null; }
+}
+
+/* ═══════════════════════════════════════
+   MAIN CALCULATION
+═══════════════════════════════════════ */
+function run() {
+  /* ── Raw inputs ── */
+  const bolig0    = v('bolig');
+  const bil0      = v('bil');
+  const bank0     = v('bank');
+  const fond0     = v('fond');
+  const pensjon0  = v('pensjon');
+  const andEid0   = v('andre-eid');
+
+  const boligLan0    = v('bolig-lan');
+  const boligRente   = scenarioMult(v('bolig-rente', 5.5), 'boligRente') / 100;
+  const boligAr      = v('bolig-ar', 25);
+  const bilLan0      = v('bil-lan');
+  const bilRente     = v('bil-rente', 7.0) / 100;
+  const bilAr        = v('bil-ar', 4);
+  const studieLan0   = v('studie-lan');
+  const studieRente  = v('studie-rente', 3.8) / 100;
+  const studieAr     = v('studie-ar', 15);
+  const forbrukLan0  = v('forbruk-lan');
+  const forbrukRente = v('forbruk-rente', 18) / 100;
+
+  const bruttolon   = v('bruttolon', 65000);
+  const annenInk    = v('annen-ink', 0);
+  const utgifter    = v('utgifter', 45000);
+  const skattesats  = v('skatt', 35) / 100;
+  const fondAndel   = v('fond-andel', 40) / 100;
+
+  const inflasjon   = scenarioMult(v('inflasjon', 2.5), 'inflasjon') / 100;
+  const lonnsvekst  = scenarioMult(v('lonnsvekst', 3.0), 'lonnsvekst') / 100;
+  const boligvekst  = scenarioMult(v('boligvekst', 3.5), 'boligvekst') / 100;
+  const fondvekst   = scenarioMult(v('fondvekst', 7.0), 'fondvekst') / 100;
+  const pensjonvekst= scenarioMult(v('pensjonvekst', 5.0), 'pensjonvekst') / 100;
+  const bilavskr    = v('bilavskr', 15) / 100;
+  const fireForbruk = v('fire-forbruk', 60000);
+
+  /* ── Derive fixed monthly payments ── */
+  const boligMndPmt  = monthlyPmt(boligLan0, boligRente, boligAr);
+  const bilMndPmt    = monthlyPmt(bilLan0, bilRente, bilAr);
+  const studieMndPmt = monthlyPmt(studieLan0, studieRente, studieAr);
+
+  /* ── Year-by-year projection ── */
+  const N = END_YEAR - CURRENT_YEAR + 1;
+  const years   = [];
+  const eiArr   = []; // total assets
+  const gjArr   = []; // total debt
+  const nwArr   = []; // net worth
+  const boligArr= [];
+  const bilArr  = [];
+  const bankArr = [];
+  const fondArr = [];
+  const pensArr = [];
+  const boligLanArr  = [];
+  const bilLanArr    = [];
+  const studieLanArr = [];
+  const forbrukLanArr= [];
+  const mndOvArr= [];
+
+  let bankCur    = bank0;
+  let fondCur    = fond0;
+  let pensjonCur = pensjon0;
+  let forbrukCur = forbrukLan0;
+
+  for (let i = 0; i < N; i++) {
+    years.push(CURRENT_YEAR + i);
+
+    const lf = Math.pow(1 + lonnsvekst, i);
+    const inf = Math.pow(1 + inflasjon, i);
+
+    /* Income & surplus */
+    const bruttoI  = bruttolon * lf;
+    const nettoI   = bruttoI * (1 - skattesats) + annenInk * lf;
+    const utgifterI= utgifter * inf;
+    const mndOv    = nettoI - utgifterI;
+    mndOvArr.push(mndOv);
+
+    /* Asset values */
+    const boligI = bolig0 * Math.pow(1 + boligvekst, i);
+    const bilI   = bil0   * Math.pow(1 - bilavskr, i);
+    boligArr.push(boligI);
+    bilArr.push(bilI);
+
+    if (i > 0) {
+      const prevOv = mndOvArr[i - 1];
+      const sparings  = Math.max(0, prevOv) * (1 - fondAndel) * 12;
+      const invests   = Math.max(0, prevOv) * fondAndel * 12;
+      bankCur    = bankCur * 1.02 + sparings;  /* 2% bank rate */
+      fondCur    = fondCur * (1 + fondvekst) + invests;
+      /* Rough employer pension ~2% of gross salary */
+      pensjonCur = pensjonCur * (1 + pensjonvekst) + bruttoI * 0.02 * 12;
+      /* Forbrukslån: pay minimum (interest + principal, 5yr payoff) */
+      const fbPmt = monthlyPmt(forbrukLan0, forbrukRente, 5);
+      forbrukCur = loanBal(forbrukLan0, forbrukRente, 5, i);
+    }
+
+    bankArr.push(bankCur);
+    fondArr.push(fondCur);
+    pensArr.push(pensjonCur);
+
+    /* Loan balances */
+    const bLan = loanBal(boligLan0, boligRente, boligAr, i);
+    const cLan = loanBal(bilLan0, bilRente, bilAr, i);
+    const sLan = loanBal(studieLan0, studieRente, studieAr, i);
+    const fLan = Math.max(0, loanBal(forbrukLan0, forbrukRente, 5, i));
+    boligLanArr.push(bLan);
+    bilLanArr.push(cLan);
+    studieLanArr.push(sLan);
+    forbrukLanArr.push(fLan);
+
+    const andEidI = andEid0 * Math.pow(1 + inflasjon * 0.4, i);
+    const totalEid = boligI + bilI + bankCur + fondCur + pensjonCur + andEidI;
+    const totalGj  = bLan + cLan + sLan + fLan;
+    eiArr.push(totalEid);
+    gjArr.push(totalGj);
+    nwArr.push(totalEid - totalGj);
+  }
+
+  lastData = { years, eiArr, gjArr, nwArr, boligArr, bilArr, bankArr, fondArr, pensArr,
+               boligLanArr, bilLanArr, studieLanArr, forbrukLanArr, mndOvArr };
+
+  /* ── FIRE calcs ── */
+  const fireMaal    = fireForbruk * 12 * 25;
+  const firePortNaa = fond0 + bank0 + pensjon0;
+  const firePct     = Math.min(100, firePortNaa / fireMaal * 100);
+  let fireYear = '> 2035';
+  for (let i = 0; i < N; i++) {
+    if (fondArr[i] + bankArr[i] + pensArr[i] >= fireMaal) {
+      fireYear = years[i].toString();
+      break;
+    }
+  }
+
+  /* ── Update DOM ── */
+  const nwNow  = nwArr[0];
+  const nw2035 = nwArr[N - 1];
+  const growth = nwNow !== 0 ? (nw2035 - nwNow) / Math.abs(nwNow) * 100 : 0;
+
+  const nwEl = document.getElementById('nw-val');
+  nwEl.className = 'nw-val' + (nwNow < 0 ? ' neg' : '');
+  animNum(nwEl, nwNow);
+
+  const badge = document.getElementById('banner-badge');
+  badge.className = 'banner-badge ' + (growth >= 0 ? 'badge-pos' : 'badge-neg');
+  document.getElementById('badge-arrow').textContent = growth >= 0 ? '↑' : '↓';
+  document.getElementById('badge-txt').textContent =
+    (growth >= 0 ? '+' : '') + growth.toFixed(0) + '% til 2035';
+
+  animNum(document.getElementById('kpi-eid'), eiArr[0]);
+  animNum(document.getElementById('kpi-gjeld'), gjArr[0]);
+  animNum(document.getElementById('kpi-overskudd'), mndOvArr[0]);
+  animNum(document.getElementById('kpi-2035'), nw2035);
+  document.getElementById('kpi-ratio').textContent =
+    eiArr[0] > 0 ? pct(gjArr[0] / eiArr[0] * 100) : '—';
+  animNum(document.getElementById('kpi-fire'), fireMaal);
+  animNum(document.getElementById('kpi-bolig35'), boligArr[N - 1]);
+  animNum(document.getElementById('kpi-bil'), bilArr[0]);
+
+  /* FIRE section */
+  document.getElementById('fire-maal').textContent = kr(fireMaal);
+  document.getElementById('fire-naa').textContent  = kr(firePortNaa);
+  document.getElementById('fire-ar').textContent   = fireYear;
+  document.getElementById('fire-pct-txt').textContent = firePct.toFixed(1) + '% av FIRE-målet nådd';
+  document.getElementById('fire-prog-fill').style.width = firePct + '%';
+
+  /* Budget */
+  renderBudget(bruttolon, nettoAt(bruttolon, skattesats, annenInk), utgifter, skattesats, annenInk);
+
+  /* Charts */
+  renderCharts(lastData, fondvekst, pensjonvekst, boligvekst);
+
+  /* Table */
+  renderTable(lastData);
+}
+
+function nettoAt(bruttolon, skatt, annen) {
+  return bruttolon * (1 - skatt) + annen;
+}
+
+/* ═══════════════════════════════════════
+   BUDGET BARS
+═══════════════════════════════════════ */
+function renderBudget(brutto, netto, utgifter, skatt, annen) {
+  const skatteKr = brutto * skatt;
+  const overskudd = netto - utgifter;
+  const wrap = document.getElementById('bud-wrap');
+
+  const items = [
+    { name: 'Bruttolønn', amt: brutto, color: '#6366f1', pct: 100 },
+    { name: `Skatt (${Math.round(skatt*100)}%)`, amt: -skatteKr, color: '#ef4444', pct: skatt * 100 },
+    { name: 'Utgifter', amt: -utgifter, color: '#f59e0b', pct: utgifter / brutto * 100 },
+    { name: 'Overskudd', amt: overskudd, color: overskudd >= 0 ? '#10b981' : '#ef4444', pct: Math.abs(overskudd) / brutto * 100 },
+  ];
+
+  wrap.innerHTML = items.map(it => `
+    <div class="bud-item">
+      <div class="bud-row">
+        <span class="bud-name">${it.name}</span>
+        <span class="bud-amt" style="color:${it.color}">${it.amt >= 0 ? '' : '- '}${kr(Math.abs(it.amt))}</span>
+      </div>
+      <div class="prog">
+        <div class="prog-fill" style="width:${Math.min(100, Math.max(0, it.pct))}%;background:${it.color}"></div>
+      </div>
+    </div>
+  `).join('');
+}
+
+/* ═══════════════════════════════════════
+   CHARTS
+═══════════════════════════════════════ */
+function renderCharts(d, fondvekst, pensjonvekst, boligvekst) {
+  const { years, eiArr, gjArr, nwArr, boligArr, bilArr, bankArr, fondArr, pensArr,
+          boligLanArr, bilLanArr, studieLanArr, forbrukLanArr } = d;
+
+  /* ── 1. Net worth line chart ── */
+  destroyChart('nw');
+  {
+    const ctx = document.getElementById('chart-nw').getContext('2d');
+    const gNW = grad(ctx, 'rgba(99,102,241,.45)', 'rgba(99,102,241,.0)');
+    charts.nw = new Chart(ctx, {
+      type: 'line',
+      data: {
+        labels: years,
+        datasets: [
+          {
+            label: 'Nettoverdi',
+            data: nwArr,
+            borderColor: '#6366f1',
+            backgroundColor: gNW,
+            borderWidth: 2.5,
+            pointRadius: 4,
+            pointBackgroundColor: '#6366f1',
+            pointHoverRadius: 7,
+            fill: true,
+            tension: 0.4,
+          },
+          {
+            label: 'Totale eiendeler',
+            data: eiArr,
+            borderColor: '#10b981',
+            borderWidth: 1.5,
+            borderDash: [6, 4],
+            pointRadius: 2,
+            pointHoverRadius: 5,
+            fill: false,
+            tension: 0.4,
+            backgroundColor: 'transparent',
+          },
+          {
+            label: 'Total gjeld',
+            data: gjArr,
+            borderColor: '#ef4444',
+            borderWidth: 1.5,
+            borderDash: [6, 4],
+            pointRadius: 2,
+            pointHoverRadius: 5,
+            fill: false,
+            tension: 0.4,
+            backgroundColor: 'transparent',
+          },
+        ]
+      },
+      options: {
+        responsive: true, maintainAspectRatio: false,
+        interaction: { mode: 'index', intersect: false },
+        plugins: {
+          legend: { position: 'top', labels: { boxWidth: 12, color: '#94a3b8', padding: 14 } },
+          tooltip: { ...TT_BASE, callbacks: { label: c => ` ${c.dataset.label}: ${kr(c.raw)}` } },
+        },
+        scales: {
+          x: { grid: { color: 'rgba(255,255,255,.04)' } },
+          y: { grid: { color: 'rgba(255,255,255,.04)' },
+               ticks: { callback: v => kr(v, true) } }
+        }
+      }
+    });
+  }
+
+  /* ── 2. Assets vs Debt ── */
+  destroyChart('eid');
+  {
+    const ctx = document.getElementById('chart-eid-gjeld').getContext('2d');
+    const gE = grad(ctx, 'rgba(16,185,129,.45)', 'rgba(16,185,129,.03)', 220);
+    const gG = grad(ctx, 'rgba(239,68,68,.35)', 'rgba(239,68,68,.03)', 220);
+    charts.eid = new Chart(ctx, {
+      type: 'line',
+      data: {
+        labels: years,
+        datasets: [
+          { label: 'Eiendeler', data: eiArr, borderColor: '#10b981', backgroundColor: gE,
+            borderWidth: 2, fill: true, tension: 0.4, pointRadius: 3, pointHoverRadius: 6 },
+          { label: 'Gjeld',     data: gjArr, borderColor: '#ef4444', backgroundColor: gG,
+            borderWidth: 2, fill: true, tension: 0.4, pointRadius: 3, pointHoverRadius: 6 },
+        ]
+      },
+      options: {
+        responsive: true, maintainAspectRatio: false,
+        interaction: { mode: 'index', intersect: false },
+        plugins: {
+          legend: { position: 'top', labels: { boxWidth: 12, color: '#94a3b8' } },
+          tooltip: { ...TT_BASE, callbacks: { label: c => ` ${c.dataset.label}: ${kr(c.raw)}` } },
+        },
+        scales: {
+          x: { grid: { color: 'rgba(255,255,255,.04)' } },
+          y: { grid: { color: 'rgba(255,255,255,.04)' }, ticks: { callback: v => kr(v, true) } }
+        }
+      }
+    });
+  }
+
+  /* ── 3. Debt by type ── */
+  destroyChart('gj');
+  {
+    const ctx = document.getElementById('chart-gjeld-type').getContext('2d');
+    charts.gj = new Chart(ctx, {
+      type: 'bar',
+      data: {
+        labels: years,
+        datasets: [
+          { label: 'Boliglån',   data: boligLanArr,  backgroundColor: 'rgba(99,102,241,.75)',  borderRadius: 3 },
+          { label: 'Billån',     data: bilLanArr,    backgroundColor: 'rgba(139,92,246,.75)',  borderRadius: 3 },
+          { label: 'Studielån',  data: studieLanArr, backgroundColor: 'rgba(6,182,212,.75)',   borderRadius: 3 },
+          { label: 'Forbrukslån',data: forbrukLanArr,backgroundColor: 'rgba(239,68,68,.75)',   borderRadius: 3 },
+        ]
+      },
+      options: {
+        responsive: true, maintainAspectRatio: false,
+        interaction: { mode: 'index', intersect: false },
+        plugins: {
+          legend: { position: 'top', labels: { boxWidth: 10, color: '#94a3b8' } },
+          tooltip: { ...TT_BASE, callbacks: { label: c => ` ${c.dataset.label}: ${kr(c.raw)}` } },
+        },
+        scales: {
+          x: { stacked: true, grid: { color: 'rgba(255,255,255,.04)' } },
+          y: { stacked: true, grid: { color: 'rgba(255,255,255,.04)' }, ticks: { callback: v => kr(v, true) } }
+        }
+      }
+    });
+  }
+
+  /* ── 4. Asset growth lines ── */
+  destroyChart('akt');
+  {
+    const ctx = document.getElementById('chart-aktiva').getContext('2d');
+    charts.akt = new Chart(ctx, {
+      type: 'line',
+      data: {
+        labels: years,
+        datasets: [
+          { label: 'Fond/Aksjer', data: fondArr,  borderColor: '#6366f1', borderWidth:2, fill:false, tension:.4, pointRadius:2, pointHoverRadius:5 },
+          { label: 'Sparing',     data: bankArr,  borderColor: '#06b6d4', borderWidth:2, fill:false, tension:.4, pointRadius:2, pointHoverRadius:5 },
+          { label: 'Pensjon',     data: pensArr,  borderColor: '#f59e0b', borderWidth:2, fill:false, tension:.4, pointRadius:2, pointHoverRadius:5 },
+          { label: 'Bolig',       data: boligArr, borderColor: '#10b981', borderWidth:2, fill:false, tension:.4, pointRadius:2, pointHoverRadius:5, borderDash:[4,3] },
+          { label: 'Bil',         data: bilArr,   borderColor: '#ef4444', borderWidth:2, fill:false, tension:.4, pointRadius:2, pointHoverRadius:5, borderDash:[4,3] },
+        ]
+      },
+      options: {
+        responsive: true, maintainAspectRatio: false,
+        interaction: { mode: 'index', intersect: false },
+        plugins: {
+          legend: { position: 'top', labels: { boxWidth: 10, color: '#94a3b8', padding: 8 } },
+          tooltip: { ...TT_BASE, callbacks: { label: c => ` ${c.dataset.label}: ${kr(c.raw)}` } },
+        },
+        scales: {
+          x: { grid: { color: 'rgba(255,255,255,.04)' } },
+          y: { grid: { color: 'rgba(255,255,255,.04)' }, ticks: { callback: v => kr(v, true) } }
+        }
+      }
+    });
+  }
+
+  /* ── 5. Donut / allocation ── */
+  destroyChart('don');
+  {
+    const ctx = document.getElementById('chart-donut').getContext('2d');
+    const raw = [boligArr[0], bilArr[0], bankArr[0], fondArr[0], pensArr[0]];
+    charts.don = new Chart(ctx, {
+      type: 'doughnut',
+      data: {
+        labels: ['Bolig', 'Bil', 'Sparing', 'Fond', 'Pensjon'],
+        datasets: [{
+          data: raw.map(x => Math.max(0, x)),
+          backgroundColor: ['#6366f1','#8b5cf6','#06b6d4','#10b981','#f59e0b'],
+          borderWidth: 0,
+          hoverOffset: 10,
+        }]
+      },
+      options: {
+        responsive: true, maintainAspectRatio: false,
+        cutout: '62%',
+        plugins: {
+          legend: { position: 'bottom', labels: { boxWidth: 10, color: '#94a3b8', padding: 10, font: { size: 10 } } },
+          tooltip: {
+            ...TT_BASE,
+            callbacks: {
+              label: c => {
+                const total = c.dataset.data.reduce((a, b) => a + b, 0);
+                return ` ${c.label}: ${kr(c.raw)} (${(c.raw / total * 100).toFixed(1)}%)`;
+              }
+            }
+          },
+        }
+      }
+    });
+  }
+}
+
+/* ═══════════════════════════════════════
+   TABLE
+═══════════════════════════════════════ */
+function renderTable(d) {
+  const { years, eiArr, gjArr, nwArr, fondArr, bankArr, pensArr, mndOvArr } = d;
+  const tbody = document.getElementById('t-body');
+  tbody.innerHTML = '';
+  const base = nwArr[0];
+
+  years.forEach((yr, i) => {
+    const nw   = nwArr[i];
+    const chg  = i > 0 ? nw - nwArr[i - 1] : null;
+    const growT= base !== 0 ? (nw - base) / Math.abs(base) * 100 : 0;
+    const liquid = fondArr[i] + bankArr[i] + pensArr[i];
+    const ov   = mndOvArr[i];
+
+    const tr = document.createElement('tr');
+    if (yr === CURRENT_YEAR) tr.className = 'yr-now';
+    tr.innerHTML = `
+      <td>${yr}${yr === CURRENT_YEAR ? '<span class="yr-badge">NÅ</span>' : ''}</td>
+      <td>${kr(eiArr[i])}</td>
+      <td>${kr(gjArr[i])}</td>
+      <td class="${nw >= 0 ? 'td-pos' : 'td-neg'}">${kr(nw)}</td>
+      <td class="${chg === null ? '' : chg >= 0 ? 'td-pos' : 'td-neg'}">
+        ${chg === null ? '—' : (chg >= 0 ? '+' : '') + kr(chg)}
+      </td>
+      <td class="${growT >= 0 ? 'td-pos' : 'td-neg'}">
+        ${i === 0 ? '—' : (growT >= 0 ? '+' : '') + growT.toFixed(1) + '%'}
+      </td>
+      <td>${kr(liquid)}</td>
+      <td class="${ov >= 0 ? 'td-pos' : 'td-neg'}">${kr(ov)}</td>
+    `;
+    tbody.appendChild(tr);
+  });
+}
+
+/* ═══════════════════════════════════════
+   INIT
+═══════════════════════════════════════ */
+document.addEventListener('DOMContentLoaded', () => {
+  run();
+
+  /* Live update on input change (debounced 500ms) */
+  let timer;
+  document.querySelectorAll('input').forEach(el => {
+    el.addEventListener('input', () => {
+      clearTimeout(timer);
+      timer = setTimeout(run, 500);
+    });
+  });
+});
+</script>
+</body>
+</html>
